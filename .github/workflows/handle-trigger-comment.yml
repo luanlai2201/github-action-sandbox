@@ -68,28 +68,6 @@ jobs:
           comment_body="$(jq -r '.comment.body' $GITHUB_EVENT_PATH)"
           previous_body="$(jq -r '.changes.body.from' $GITHUB_EVENT_PATH)"
 
-          ga_workflow_trigger_checkboxes=("build-e2e-assets--hr-web-app")
-
-          for checkbox in "${ga_workflow_trigger_checkboxes[@]}"; do
-            echo "GA Workflow Trigger Checkbox for ${checkbox} was started"
-
-            # Prepare regex patterns for each GitHub Actions checkbox
-            unchecked_regex="\[\s*\]\s*\`${checkbox}\`\s*on\s*GitHub\s*Actions\sat\sthis\s\[workflow\]"
-            checked_regex="\[\s*[Xx]\s*\]\s*\`${checkbox}\`\s*on\s*GitHub\s*Actions\sat\sthis\s\[workflow\]"
-
-            # Process GitHub Actions checkboxes
-            if echo "$previous_body" | grep -Pq "$unchecked_regex" && echo "$comment_body" | grep -Pq "$checked_regex"; then
-              curl -X POST \
-                -H "Accept: application/vnd.github.v3+json" \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                "https://api.github.com/repos/$REPO/actions/workflows/${checkbox}.yml/dispatches" \
-                -d "{\"ref\": \"$BRANCH_NAME\"}"
-
-              echo "Dispatched GitHub Actions workflow for checkbox: $checkbox"
-            else
-              echo "[FAILED] Dispatched GitHub Actions workflow for checkbox: $checkbox"
-            fi
-          done
 
           declare -A ga_workflow_approval_checkboxes=(
             [pr-testing]="PR testing"
