@@ -1,2 +1,2 @@
 # github-action-sandbox
-test command
+test command 1
