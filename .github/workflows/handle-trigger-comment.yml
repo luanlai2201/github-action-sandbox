@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.issue.pull_request != null && github.event.comment.user.login == 'tanpdn'
     env:
-      REPO: "Thinkei/frontend-core"
+      REPO: "luanlai2201/github-action-sandbox"
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Get branch name of PR
