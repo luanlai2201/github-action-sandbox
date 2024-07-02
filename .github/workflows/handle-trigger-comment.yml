@@ -16,13 +16,26 @@ jobs:
       - name: Get branch name of PR
         id: get-branch-name
         run: |
-          branch_name=${{ github.head_ref }}
+          pr_url="${{ github.event.issue.pull_request.url }}"
+          pr_number="${pr_url##*/}"
+
+          # Fetch PR details
+          pr_details=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$REPO/pulls/$pr_number")
+
+          # Extract the branch name
+          branch_name=$(echo $pr_details | jq -r '.head.ref')
+
           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
 
       - name: Extract commit hash
         id: extract-commit-hash
         run: |
-          commit_hash=$(jq -r '.issue.pull_request.head.sha' $GITHUB_EVENT_PATH)
+          comment_body="$(jq -r '.comment.body' $GITHUB_EVENT_PATH)"
+          # Extract commit hash using grep and regex
+          commit_hash=$(echo "$comment_body" | grep -oP 'commit \K\w+')
+          echo "Commit hash extracted: $commit_hash"
           echo "commit_hash=$commit_hash" >> $GITHUB_OUTPUT
 
       - name: Get environments
