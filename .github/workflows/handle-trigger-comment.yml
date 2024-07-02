@@ -1,0 +1,145 @@
+name: Handle triggers box events
+
+on:
+  issue_comment:
+    types: [edited]
+
+jobs:
+  handle-checkbox-events:
+    name: Handle checkbox events
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request != null && github.event.comment.user.login == 'tanpdn'
+    env:
+      REPO: "Thinkei/frontend-core"
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - name: Get branch name of PR
+        id: get-branch-name
+        run: |
+          pr_url="${{ github.event.issue.pull_request.url }}"
+          pr_number="${pr_url##*/}"
+
+          # Fetch PR details
+          pr_details=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$REPO/pulls/$pr_number")
+
+          # Extract the branch name
+          branch_name=$(echo $pr_details | jq -r '.head.ref')
+
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+
+      - name: Extract commit hash
+        id: extract-commit-hash
+        run: |
+          comment_body="$(jq -r '.comment.body' $GITHUB_EVENT_PATH)"
+          # Extract commit hash using grep and regex
+          commit_hash=$(echo "$comment_body" | grep -oP 'commit \K\w+')
+          echo "Commit hash extracted: $commit_hash"
+          echo "commit_hash=$commit_hash" >> $GITHUB_OUTPUT
+
+      - name: Get environments
+        id: get-environments
+        run: |
+          environments_response=$(curl -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$REPO/environments")
+
+          # Extract the IDs of "Development" and "Preview"
+          development_id=$(echo $environments_response | jq -r '.environments[] | select(.name == "Development") | .id')
+          preview_id=$(echo $environments_response | jq -r '.environments[] | select(.name == "Preview") | .id')
+
+          echo "Development ID: $development_id"
+          echo "Preview ID: $preview_id"
+
+          echo "development_id=$development_id" >> $GITHUB_OUTPUT
+          echo "preview_id=$preview_id" >> $GITHUB_OUTPUT
+
+      - name: Analyze checkbox toggles
+        env:
+          COMMIT_HASH: ${{ steps.extract-commit-hash.outputs.commit_hash }}
+          BRANCH_NAME: ${{ steps.get-branch-name.outputs.branch_name }}
+          DEVELOPMENT_ID: ${{ steps.get-environments.outputs.development_id }}
+          PREVIEW_ID: ${{ steps.get-environments.outputs.preview_id }}
+        run: |
+          # Retrieve comment body and previous body content
+          comment_body="$(jq -r '.comment.body' $GITHUB_EVENT_PATH)"
+          previous_body="$(jq -r '.changes.body.from' $GITHUB_EVENT_PATH)"
+
+          ga_workflow_trigger_checkboxes=("build-e2e-assets--hr-web-app")
+
+          for checkbox in "${ga_workflow_trigger_checkboxes[@]}"; do
+            echo "GA Workflow Trigger Checkbox for ${checkbox} was started"
+
+            # Prepare regex patterns for each GitHub Actions checkbox
+            unchecked_regex="\[\s*\]\s*\`${checkbox}\`\s*on\s*GitHub\s*Actions\sat\sthis\s\[workflow\]"
+            checked_regex="\[\s*[Xx]\s*\]\s*\`${checkbox}\`\s*on\s*GitHub\s*Actions\sat\sthis\s\[workflow\]"
+
+            # Process GitHub Actions checkboxes
+            if echo "$previous_body" | grep -Pq "$unchecked_regex" && echo "$comment_body" | grep -Pq "$checked_regex"; then
+              curl -X POST \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token $GITHUB_TOKEN" \
+                "https://api.github.com/repos/$REPO/actions/workflows/${checkbox}.yml/dispatches" \
+                -d "{\"ref\": \"$BRANCH_NAME\"}"
+
+              echo "Dispatched GitHub Actions workflow for checkbox: $checkbox"
+            else
+              echo "[FAILED] Dispatched GitHub Actions workflow for checkbox: $checkbox"
+            fi
+          done
+
+          declare -A ga_workflow_approval_checkboxes=(
+            [pr-testing]="PR testing"
+          )
+
+          declare -A ga_workflow_ids=(
+            [build-dev]=$DEVELOPMENT_ID
+          )
+
+          for checkbox in "${!ga_workflow_approval_checkboxes[@]}"; do
+            echo "GA Workflow Approval Checkbox for ${checkbox} was started"
+
+            # Prepare regex patterns for each GitHub Actions checkbox
+            unchecked_regex="\[\s*\]\s*\`${checkbox}\`\s*on\s*GitHub\s*Actions\sat\sthis\s\[workflow\]"
+            checked_regex="\[\s*[Xx]\s*\]\s*\`${checkbox}\`\s*on\s*GitHub\s*Actions\sat\sthis\s\[workflow\]"
+
+            # Process GitHub Actions checkboxes
+            if echo "$previous_body" | grep -Pq "$unchecked_regex" && echo "$comment_body" | grep -Pq "$checked_regex"; then
+              echo "Fetching the latest deployment for ${ga_workflow_approval_checkboxes[$checkbox]}"
+
+              workflows_response=$(curl -L \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/$REPO/actions/runs?head_sha=$COMMIT_HASH")
+
+              # Extract and approve the latest deployment for the specific workflow
+              run_id=$(echo "$workflows_response" | jq --arg workflow_name "${ga_workflow_approval_checkboxes[$checkbox]}" '
+                .workflow_runs
+                | sort_by(.created_at) | reverse
+                | map(select(.name == $workflow_name))
+                | .[0].id
+              ')
+
+              echo "The run ID for ${ga_workflow_approval_checkboxes[$checkbox]} is: $run_id"
+
+              if [[ -n "$run_id" ]] && [[ "$run_id" != "null" ]]; then
+                env_id=${ga_workflow_ids[$checkbox]}
+                echo "Approving the latest deployment for ${ga_workflow_approval_checkboxes[$checkbox]} with environment ID $env_id"
+
+                curl -L \
+                  -X POST \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Authorization: Bearer $GITHUB_TOKEN" \
+                  "https://api.github.com/repos/$REPO/actions/runs/$run_id/pending_deployments" \
+                  -d "{\"environment_ids\":[$env_id],\"state\":\"approved\",\"comment\":\"Ship it!\"}"
+
+                echo "Approved the latest deployment for ${ga_workflow_approval_checkboxes[$checkbox]}"
+              fi
+            else
+              echo "[FAILED] Approved the latest deployment for ${ga_workflow_approval_checkboxes[$checkbox]}"
+            fi
+          done

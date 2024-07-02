@@ -1,0 +1,14 @@
+name: "PR testing"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  echo-test:
+    name: Echo test
+    runs-on: ubuntu-latest
+    environment: Development
+    steps:
+      - name: Echo comment body
+        run: |
+          echo "Comment body: testing running workflow on PR"
