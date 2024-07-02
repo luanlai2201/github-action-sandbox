@@ -49,10 +49,16 @@ jobs:
           }
 
           message=$(cat <<- EOF
-          # Workflow triggers <!-- workflow-triggers--hero-design-$PR_NUMBER -->
+          # Workflow triggers <!-- workflow-triggers--frontend-core-$PR_NUMBER -->
+
+          _For details on each workflow or feedback, please check out this [document](https://employmenthero.atlassian.net/wiki/spaces/FC/pages/2788917584/Draft+RFC+Pull+Request+Automation+Commands)_
 
           ## Required
           - $(generate_workflow_markdown "build-dev")
+
+          ## Optional
+          - $(generate_workflow_markdown "build-preview")
+          - $(generate_workflow_markdown "build-e2e-assets--hr-web-app")
 
           _This comment is generated against commit $COMMIT_HASH, updated at:_
           - _$(TZ='Asia/Ho_Chi_Minh' date "+%Y-%m-%d - %H:%M:%S (Asia/Ho Chi Minh)")_
