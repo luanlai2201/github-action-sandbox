@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.issue.pull_request != null && github.event.comment.user.login == 'luanlai2201'
     env:
-      REPO: "luanlai2201/github-action-sandbox"
+      REPO: ${{ github.repository }}
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Get branch name of PR
@@ -49,13 +49,10 @@ jobs:
 
           # Extract the IDs of "Development" and "Preview"
           development_id=$(echo $environments_response | jq -r '.environments[] | select(.name == "Development") | .id')
-          preview_id=$(echo $environments_response | jq -r '.environments[] | select(.name == "Preview") | .id')
 
           echo "Development ID: $development_id"
-          echo "Preview ID: $preview_id"
 
           echo "development_id=$development_id" >> $GITHUB_OUTPUT
-          echo "preview_id=$preview_id" >> $GITHUB_OUTPUT
 
       - name: Analyze checkbox toggles
         env:
