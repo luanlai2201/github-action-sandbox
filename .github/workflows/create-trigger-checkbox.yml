@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches:
-      - epic/** # Change this to the branch you want to trigger the workflow on
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
