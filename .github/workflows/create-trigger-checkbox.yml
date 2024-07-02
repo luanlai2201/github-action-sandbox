@@ -51,8 +51,6 @@ jobs:
           message=$(cat <<- EOF
           # Workflow triggers <!-- workflow-triggers--hero-design-$PR_NUMBER -->
 
-          _For details on each workflow or feedback, please check out this [document](https://employmenthero.atlassian.net/wiki/spaces/FC/pages/2788917584/Draft+RFC+Pull+Request+Automation+Commands)_
-
           ## Required
           - $(generate_workflow_markdown "build-dev")
 
