@@ -29,7 +29,7 @@ jobs:
           # Fetch all comments, then find the first comment made by $ACTION_BOT with the correct hidden ID
 
           comment_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$comments_url" |
-            jq -r --arg ACTION_BOT "$ACTION_BOT" --arg PR_NUMBER "$PR_NUMBER" '.[] | select(.user.login == $ACTION_BOT and (.body | test("<!-- workflow-triggers--frontend-core-\($PR_NUMBER) -->"))) | .id' | head -1)
+            jq -r --arg ACTION_BOT "$ACTION_BOT" --arg PR_NUMBER "$PR_NUMBER" '.[] | select(.user.login == $ACTION_BOT and (.body | test("<!-- workflow-triggers--hero-design-\($PR_NUMBER) -->"))) | .id' | head -1)
           echo "comment_id=$comment_id" >> $GITHUB_OUTPUT
 
       - name: Create/edit trigger comment
