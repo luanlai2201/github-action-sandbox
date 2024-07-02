@@ -29,7 +29,7 @@ jobs:
           # Fetch all comments, then find the first comment made by $ACTION_BOT with the correct hidden ID
 
           comment_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$comments_url" |
-            jq -r --arg ACTION_BOT "$ACTION_BOT" --arg PR_NUMBER "$PR_NUMBER" '.[] | select(.user.login == $ACTION_BOT and (.body | test("<!-- workflow-triggers--frontend-core-\($PR_NUMBER) -->"))) | .id' | head -1)
+            jq -r --arg ACTION_BOT "$ACTION_BOT" --arg PR_NUMBER "$PR_NUMBER" '.[] | select(.user.login == $ACTION_BOT and (.body | test("<!-- workflow-triggers--hero-design-\($PR_NUMBER) -->"))) | .id' | head -1)
           echo "comment_id=$comment_id" >> $GITHUB_OUTPUT
 
       - name: Create/edit trigger comment
@@ -49,16 +49,10 @@ jobs:
           }
 
           message=$(cat <<- EOF
-          # Workflow triggers <!-- workflow-triggers--frontend-core-$PR_NUMBER -->
-
-          _For details on each workflow or feedback, please check out this [document](https://employmenthero.atlassian.net/wiki/spaces/FC/pages/2788917584/Draft+RFC+Pull+Request+Automation+Commands)_
+          # Workflow triggers <!-- workflow-triggers--hero-design-$PR_NUMBER -->
 
           ## Required
           - $(generate_workflow_markdown "build-dev")
-
-          ## Optional
-          - $(generate_workflow_markdown "build-preview")
-          - $(generate_workflow_markdown "build-e2e-assets--hr-web-app")
 
           _This comment is generated against commit $COMMIT_HASH, updated at:_
           - _$(TZ='Asia/Ho_Chi_Minh' date "+%Y-%m-%d - %H:%M:%S (Asia/Ho Chi Minh)")_
