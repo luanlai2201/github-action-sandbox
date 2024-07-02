@@ -52,7 +52,7 @@ jobs:
           # Workflow triggers <!-- workflow-triggers--hero-design-$PR_NUMBER -->
 
           ## Required
-          - $(generate_workflow_markdown "build-dev")
+          - $(generate_workflow_markdown "pr-testing")
 
           _This comment is generated against commit $COMMIT_HASH, updated at:_
           - _$(TZ='Asia/Ho_Chi_Minh' date "+%Y-%m-%d - %H:%M:%S (Asia/Ho Chi Minh)")_

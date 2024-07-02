@@ -71,7 +71,7 @@ jobs:
           )
 
           declare -A ga_workflow_ids=(
-            [build-dev]=$DEVELOPMENT_ID
+            [pr-testing]=$DEVELOPMENT_ID
           )
 
           for checkbox in "${!ga_workflow_approval_checkboxes[@]}"; do
