@@ -8,7 +8,7 @@ jobs:
   handle-checkbox-events:
     name: Handle checkbox events
     runs-on: ubuntu-latest
-    if: github.event.issue.pull_request != null && github.event.comment.user.login == 'tanpdn'
+    if: github.event.issue.pull_request != null && github.event.comment.user.login == 'luanlai2201'
     env:
       REPO: "luanlai2201/github-action-sandbox"
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
