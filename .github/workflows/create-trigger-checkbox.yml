@@ -20,7 +20,7 @@ jobs:
       COMMIT_HASH: ${{ github.event.pull_request.head.sha }}
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       HEAD_REF: ${{ github.head_ref }}
-      ACTION_BOT: "github-actions[bot]"
+      ACTION_BOT: "luanlai2201"
     steps:
       - name: Find existing comment
         id: find_comment
