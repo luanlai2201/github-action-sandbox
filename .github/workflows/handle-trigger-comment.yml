@@ -33,6 +33,8 @@ jobs:
         id: extract-commit-hash
         run: |
           comment_body="$(jq -r '.comment.body' $GITHUB_EVENT_PATH)"
+
+          echo "$comment_body"
           # Extract commit hash using grep and regex
           commit_hash="$(echo "$comment_body" | grep -oP 'commit \K\w+')"
 
