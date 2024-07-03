@@ -11,7 +11,7 @@ jobs:
     if: github.event.issue.pull_request != null && github.event.comment.user.login == 'luanlai2201'
     env:
       REPO: ${{ github.repository }}
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Get branch name of PR
         id: get-branch-name

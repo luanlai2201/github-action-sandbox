@@ -18,7 +18,7 @@ jobs:
       REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       COMMIT_HASH: ${{ github.event.pull_request.head.sha }}
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HEAD_REF: ${{ github.head_ref }}
       ACTION_BOT: "luanlai2201"
     steps:
